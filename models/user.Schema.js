@@ -19,14 +19,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
-  request: {
-    type: String,
-    require: true,
-  },
-  friendList: {
-    type: String,
-    require: true,
-  },
+  friendRequest: [],
+  friendList: [],
   role: {
     type: String,
   },
