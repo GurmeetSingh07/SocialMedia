@@ -1,4 +1,5 @@
 const { model } = require("../database/connection");
+const { findByIdAndUpdate } = require("../models/user.Schema");
 const Model = require("../models/user.Schema");
 
 class Usercontoller {
@@ -66,7 +67,7 @@ class Usercontoller {
           { _id: requestReciver },
           {
             $push: {
-              friendRequest: requestReciver,
+              friendRequest: requestSender,
             },
           },
           {
@@ -80,6 +81,29 @@ class Usercontoller {
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "server Error", success: false });
+    }
+  };
+
+  requestApprove = async (req, res) => {
+    try {
+      console.log("jdsfalsj");
+      const { requestDetails, requestReciver } = req.body;
+      const requestResult = await Model.findByIdAndUpdate(
+        { _id: requestReciver },
+        {
+          $pull: {
+            friendRequest: requestDetails,
+          },
+        },
+        {
+          set: true,
+        }
+      );
+      console.log(requestDetails);
+      return res.status(200).json({ message: "aldka", success: true });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Sever Error", success: true });
     }
   };
 }
