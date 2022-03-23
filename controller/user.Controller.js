@@ -215,22 +215,21 @@ class Usercontoller {
           });
         }
       }
-      if (true) {
-        const requestResult = await Model.findByIdAndUpdate(
-          { _id: requestReciver },
-          {
-            $push: {
-              friendRequest: requestSender,
-            },
+
+      const requestResult = await Model.findByIdAndUpdate(
+        { _id: requestReciver },
+        {
+          $push: {
+            friendRequest: requestSender,
           },
-          {
-            set: true,
-          }
-        );
-        return res
-          .status(200)
-          .json({ message: "Request successfully send", success: true });
-      }
+        },
+        {
+          set: true,
+        }
+      );
+      return res
+        .status(200)
+        .json({ message: "Request successfully send", success: true });
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "server Error", success: false });
@@ -239,7 +238,6 @@ class Usercontoller {
 
   requestApprove = async (req, res) => {
     try {
-      console.log("jdsfalsj");
       const { requestDetails, requestReciver } = req.body;
       const requestResult = await Model.findByIdAndUpdate(
         { _id: requestReciver },
@@ -252,8 +250,22 @@ class Usercontoller {
           set: true,
         }
       );
-      console.log(requestDetails);
-      return res.status(200).json({ message: "aldka", success: true });
+
+      const friendListResult = await Model.findByIdAndUpdate(
+        { _id: requestReciver },
+        {
+          $push: {
+            friendList: requestDetails,
+          },
+        },
+        {
+          set: true,
+        }
+      );
+      console.log(friendListResult);
+      return res
+        .status(200)
+        .json({ message: "Request successfully accepted", success: true });
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "Sever Error", success: true });
