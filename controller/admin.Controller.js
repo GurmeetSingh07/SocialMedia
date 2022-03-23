@@ -1,39 +1,33 @@
-const { model } = require("../database/connection");
 const Model = require("../models/user.Schema");
-
-const { userSchema } = require("../joiValidation/joi.user");
-const { request } = require("../joiValidation/user.Request");
-
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
 const { model } = require("../database/connection");
 const globalData = {};
 
-
-class Usercontoller {
+class Admincontoller {
   signUp = async (req, res) => {
     try {
       const { fName, lName, emailId, password } = req.body;
 
-      const results = userSchema.validate(req.body);
-      if (results.error) {
+      if (!fName || !lName || !emailId || !password) {
         return res
           .status(206)
-          .json({ message: results.error.message, success: false });
+          .json({ message: "please fill the field", success: false });
       }
+
       const userExist = await Model.findOne({ emailId: emailId });
 
       if (userExist) {
         return res
           .status(409)
-          .json({ message: "User Already Exist", success: false });
+          .json({ message: "Admin Already Exist", success: false });
       } else {
         globalData["otp"] = Math.floor(Math.random() * 99999);
         globalData["fName"] = fName;
         globalData["lName"] = lName;
         globalData["emailId"] = emailId;
         globalData["password"] = password;
-        globalData["role"] = `${"user"}`;
+        globalData["role"] = `${"admin"}`;
 
         console.log(globalData);
 
@@ -62,7 +56,7 @@ class Usercontoller {
       let oldOtp = JSON.stringify(globalData.otp);
 
       if (otp === oldOtp) {
-        const userSave = new Model({
+        const adminSave = new Model({
           fName,
           lName,
           emailId,
@@ -70,8 +64,8 @@ class Usercontoller {
           role,
         });
 
-        const result = await userSave.save();
-        return res.status(200).json({ message: "user save", success: true });
+        const result = await adminSave.save();
+        return res.status(200).json({ message: "Admin save", success: true });
       }
     } catch (e) {
       console.log(e);
@@ -85,7 +79,7 @@ class Usercontoller {
       if (!emailId || !newPassword) {
         return res
           .status(400)
-          .json({ message: "fill the field", success: true });
+          .json({ message: "fill the field", success: false });
       }
 
       const userFind = await Model.findOne({ emailId: emailId });
@@ -93,7 +87,7 @@ class Usercontoller {
       if (!userFind) {
         return res
           .status(404)
-          .json({ message: " email not found", success: false });
+          .json({ message: "email not found", success: false });
       } else if (userFind.password === newPassword) {
         return res
           .status(400)
@@ -106,11 +100,11 @@ class Usercontoller {
           { password: newPassword },
           { new: true }
         );
-        return res.status(200).json({ message: "user update", success: true });
+        return res.status(200).json({ message: "admin update", success: true });
       }
     } catch (e) {
       console.log(e);
-      return res.status(500).json({ message: e.message, success: false });
+      return res.status(500).json({ message: e.message, success: true });
     }
   };
 
@@ -185,56 +179,6 @@ class Usercontoller {
       return res.status(500).json({ message: e.message, success: false });
     }
   };
-
-  friendRequest = async (req, res) => {
-    try {
-      const { requestReciver, requestSender } = req.body;
-      const results = request.validate(req.body);
-      if (results.error) {
-        return res
-          .status(206)
-          .json({ message: results.error.message, success: false });
-      }
-
-      const userExist = await Model.findOne({
-        _id: requestReciver,
-      });
-
-      if (!userExist) {
-        return res
-          .status(404)
-          .json({ message: "User Not Found", success: false });
-      }
-
-      for (const key in userExist.friendRequest) {
-        if (userExist.friendRequest[key] === requestReciver) {
-          return res.status(400).json({
-            message: "you have already send the request",
-            success: true,
-          });
-        }
-      }
-      if (true) {
-        const requestResult = await Model.findByIdAndUpdate(
-          { _id: requestReciver },
-          {
-            $push: {
-              friendRequest: requestReciver,
-            },
-          },
-          {
-            set: true,
-          }
-        );
-        return res
-          .status(200)
-          .json({ message: "Request successfully send", success: true });
-      }
-    } catch (err) {
-      console.log(err);
-      return res.status(500).json({ message: "server Error", success: false });
-    }
-  };
 }
 
-module.exports = new Usercontoller();
+module.exports = new Admincontoller();

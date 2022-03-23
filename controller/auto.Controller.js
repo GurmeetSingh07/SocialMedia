@@ -11,7 +11,7 @@ class AuthController {
           .status(206)
           .json({ message: "Please fill the Field", success: false });
       }
-      const admin = await collection.Model({ emailId });
+      const admin = await Model.findOne({ emailId });
 
       if (!admin)
         return res
@@ -78,37 +78,6 @@ class AuthController {
       return res
         .status(400)
         .json(e, { message: "server error", success: false });
-    }
-  };
-
-  loginPassword = async (req, res) => {
-    try {
-      const { emailId, password, phoneNumber } = req.body;
-
-      if ((!emailId && !phoneNumber) || !password) {
-        return res
-          .status(206)
-          .json({ message: "fill the field", success: false });
-      }
-
-      const users = await collection.findOne({
-        $or: [{ emailId: emailId }, { phoneNumber: phoneNumber }],
-      });
-
-      if (!users) {
-        return res
-          .status(404)
-          .json({ message: "users not  found", success: false });
-      } else if (users.password === password) {
-        return res.status(206).json({ message: "user welcome", success: true });
-      } else {
-        return res
-          .status(404)
-          .json({ message: "password  not match", success: false });
-      }
-    } catch (e) {
-      console.log(e);
-      return res.status(500).json({ message: "server error", success: false });
     }
   };
 }
