@@ -4,7 +4,7 @@ const demo = require("../helper/mailservice");
 const { model } = require("../database/connection");
 const globalData = {};
 
-class Usercontoller {
+class Admincontoller {
   signUp = async (req, res) => {
     try {
       const { fName, lName, emailId, password } = req.body;
@@ -20,14 +20,14 @@ class Usercontoller {
       if (userExist) {
         return res
           .status(409)
-          .json({ message: "User Already Exist", success: false });
+          .json({ message: "Admin Already Exist", success: false });
       } else {
         globalData["otp"] = Math.floor(Math.random() * 99999);
         globalData["fName"] = fName;
         globalData["lName"] = lName;
         globalData["emailId"] = emailId;
         globalData["password"] = password;
-        globalData["role"] = `${"user"}`;
+        globalData["role"] = `${"admin"}`;
 
         console.log(globalData);
 
@@ -56,7 +56,7 @@ class Usercontoller {
       let oldOtp = JSON.stringify(globalData.otp);
 
       if (otp === oldOtp) {
-        const userSave = new Model({
+        const adminSave = new Model({
           fName,
           lName,
           emailId,
@@ -64,8 +64,8 @@ class Usercontoller {
           role,
         });
 
-        const result = await userSave.save();
-        return res.status(200).json({ message: "user save", success: true });
+        const result = await adminSave.save();
+        return res.status(200).json({ message: "Admin save", success: true });
       }
     } catch (e) {
       console.log(e);
@@ -79,7 +79,7 @@ class Usercontoller {
       if (!emailId || !newPassword) {
         return res
           .status(400)
-          .json({ message: "fill the field", success: true });
+          .json({ message: "fill the field", success: false });
       }
 
       const userFind = await Model.findOne({ emailId: emailId });
@@ -87,7 +87,7 @@ class Usercontoller {
       if (!userFind) {
         return res
           .status(404)
-          .json({ message: " email not found", success: false });
+          .json({ message: "email not found", success: false });
       } else if (userFind.password === newPassword) {
         return res
           .status(400)
@@ -100,11 +100,11 @@ class Usercontoller {
           { password: newPassword },
           { new: true }
         );
-        return res.status(200).json({ message: "user update", success: true });
+        return res.status(200).json({ message: "admin update", success: true });
       }
     } catch (e) {
       console.log(e);
-      return res.status(500).json({ message: e.message, success: false });
+      return res.status(500).json({ message: e.message, success: true });
     }
   };
 
@@ -181,4 +181,4 @@ class Usercontoller {
   };
 }
 
-module.exports = new Usercontoller();
+module.exports = new Admincontoller();
