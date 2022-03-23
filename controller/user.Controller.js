@@ -1,21 +1,26 @@
 const { model } = require("../database/connection");
 const Model = require("../models/user.Schema");
+
+const { userSchema } = require("../joiValidation/joi.user");
+const { request } = require("../joiValidation/user.Request");
+
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
 const { model } = require("../database/connection");
 const globalData = {};
+
 
 class Usercontoller {
   signUp = async (req, res) => {
     try {
       const { fName, lName, emailId, password } = req.body;
 
-      if (!fName || !lName || !emailId || !password) {
+      const results = userSchema.validate(req.body);
+      if (results.error) {
         return res
           .status(206)
-          .json({ message: "please fill the field", success: false });
+          .json({ message: results.error.message, success: false });
       }
-
       const userExist = await Model.findOne({ emailId: emailId });
 
       if (userExist) {
@@ -183,7 +188,13 @@ class Usercontoller {
 
   friendRequest = async (req, res) => {
     try {
-      const { requestReciver, requestSender, userName } = req.body;
+      const { requestReciver, requestSender } = req.body;
+      const results = request.validate(req.body);
+      if (results.error) {
+        return res
+          .status(206)
+          .json({ message: results.error.message, success: false });
+      }
 
       const userExist = await Model.findOne({
         _id: requestReciver,
