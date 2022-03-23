@@ -9,6 +9,7 @@ router.get("/", function (req, res, next) {
 });
 router.post("/signup", userController.signUp);
 router.post("/friendRequest", userController.friendRequest);
+router.post("/requestApprove", userController.requestApprove);
 router.post("/login", AuthController.userlogin);
 
 module.exports = router;
