@@ -1,7 +1,9 @@
 const Model = require("../models/user.Schema");
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
-const { model } = require("../database/connection");
+const { adminSchema } = require("../joiValidation/joi.user");
+const { adminUpdate } = require("../joiValidation/user.Update");
+const { adminReset } = require("../joiValidation/user.Reset");
 const globalData = {};
 
 class Admincontoller {
@@ -9,12 +11,12 @@ class Admincontoller {
     try {
       const { fName, lName, emailId, password } = req.body;
 
-      if (!fName || !lName || !emailId || !password) {
+      const results = adminSchema.validate(req.body);
+      if (results.error) {
         return res
           .status(206)
-          .json({ message: "please fill the field", success: false });
+          .json({ message: results.error.message, success: false });
       }
-
       const userExist = await Model.findOne({ emailId: emailId });
 
       if (userExist) {
@@ -76,10 +78,11 @@ class Admincontoller {
   update = async (req, res) => {
     try {
       const { emailId, newPassword } = req.body;
-      if (!emailId || !newPassword) {
+      const results = adminUpdate.validate(req.body);
+      if (results.error) {
         return res
-          .status(400)
-          .json({ message: "fill the field", success: false });
+          .status(206)
+          .json({ message: results.error.message, success: false });
       }
 
       const userFind = await Model.findOne({ emailId: emailId });
@@ -146,12 +149,12 @@ class Admincontoller {
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
 
-      if (!emailId || !otp || !newPassword) {
+      const results = adminReset.validate(req.body);
+      if (results.error) {
         return res
-          .status(400)
-          .json({ message: "fill the field", success: false });
+          .status(206)
+          .json({ message: results.error.message, success: false });
       }
-
       const resetEmail = await Model.findOne({ emailId: emailId });
 
       if (!resetEmail) {

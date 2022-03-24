@@ -1,12 +1,12 @@
+const { findByIdAndUpdate } = require("../models/user.Schema");
 const Model = require("../models/user.Schema");
 
 const { userSchema } = require("../joiValidation/joi.user");
 const { request } = require("../joiValidation/user.Request");
-const { userUpdate } = require("../joiValidation/user.Update");
-const { userReset } = require("../joiValidation/user.Reset");
+
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
-
+const { model } = require("../database/connection");
 const globalData = {};
 
 class Usercontoller {
@@ -81,11 +81,10 @@ class Usercontoller {
   update = async (req, res) => {
     try {
       const { emailId, newPassword } = req.body;
-      const results = userUpdate.validate(req.body);
-      if (results.error) {
+      if (!emailId || !newPassword) {
         return res
-          .status(206)
-          .json({ message: results.error.message, success: false });
+          .status(400)
+          .json({ message: "fill the field", success: true });
       }
 
       const userFind = await Model.findOne({ emailId: emailId });
@@ -117,6 +116,7 @@ class Usercontoller {
   forget = async (req, res) => {
     try {
       const { emailId } = req.body;
+      console.log(req.body);
 
       if (!emailId) {
         return res
@@ -150,11 +150,11 @@ class Usercontoller {
 
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
-      const results = userReset.validate(req.body);
-      if (results.error) {
+
+      if (!emailId || !otp || !newPassword) {
         return res
-          .status(206)
-          .json({ message: results.error.message, success: false });
+          .status(400)
+          .json({ message: "fill the field", success: false });
       }
 
       const resetEmail = await Model.findOne({ emailId: emailId });
@@ -213,21 +213,22 @@ class Usercontoller {
           });
         }
       }
-
-      const requestResult = await Model.findByIdAndUpdate(
-        { _id: requestReciver },
-        {
-          $push: {
-            friendRequest: requestSender,
+      if (true) {
+        const requestResult = await Model.findByIdAndUpdate(
+          { _id: requestReciver },
+          {
+            $push: {
+              friendRequest: requestSender,
+            },
           },
-        },
-        {
-          set: true,
-        }
-      );
-      return res
-        .status(200)
-        .json({ message: "Request successfully send", success: true });
+          {
+            set: true,
+          }
+        );
+        return res
+          .status(200)
+          .json({ message: "Request successfully send", success: true });
+      }
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "server Error", success: false });
@@ -236,6 +237,7 @@ class Usercontoller {
 
   requestApprove = async (req, res) => {
     try {
+      console.log("jdsfalsj");
       const { requestDetails, requestReciver } = req.body;
       const results = request.validate(req.body);
       if (results.error) {
@@ -243,7 +245,6 @@ class Usercontoller {
           .status(206)
           .json({ message: results.error.message, success: false });
       }
-
       const requestResult = await Model.findByIdAndUpdate(
         { _id: requestReciver },
         {
@@ -255,22 +256,8 @@ class Usercontoller {
           set: true,
         }
       );
-
-      const friendListResult = await Model.findByIdAndUpdate(
-        { _id: requestReciver },
-        {
-          $push: {
-            friendList: requestDetails,
-          },
-        },
-        {
-          set: true,
-        }
-      );
-      console.log(friendListResult);
-      return res
-        .status(200)
-        .json({ message: "Request successfully accepted", success: true });
+      console.log(requestDetails);
+      return res.status(200).json({ message: "aldka", success: true });
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "Sever Error", success: true });

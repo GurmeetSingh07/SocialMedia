@@ -1,15 +1,17 @@
 const Model = require("../models/user.Schema");
 const tokenGenerator = require("../middleware/genjwt");
 const jwt = require("jsonwebtoken");
+const { login } = require("../joiValidation/login.Validation");
 class AuthController {
   adminlogin = async (req, res) => {
     try {
       const { emailId, password } = req.body;
-      console.log(req.body);
-      if (!emailId || !password) {
+
+      const results = login.validate(req.body);
+      if (results.error) {
         return res
           .status(206)
-          .json({ message: "Please fill the Field", success: false });
+          .json({ message: results.error.message, success: false });
       }
       const admin = await Model.findOne({ emailId });
 
@@ -45,10 +47,11 @@ class AuthController {
     try {
       const { emailId, password } = req.body;
       console.log(req.body);
-      if (!emailId || !password) {
+      const results = login.validate(req.body);
+      if (results.error) {
         return res
           .status(206)
-          .json({ message: "Please fill the Field", success: false });
+          .json({ message: results.error.message, success: false });
       }
       const user = await Model.findOne({ emailId });
       console.log(user);

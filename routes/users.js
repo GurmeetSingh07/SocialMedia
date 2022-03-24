@@ -18,6 +18,5 @@ router.put("/reset", tokenVerify, userController.reset);
 
 router.post("/friendRequest", userController.friendRequest);
 router.post("/requestApprove", userController.requestApprove);
-router.post("/login", AuthController.userlogin);
 
 module.exports = router;
