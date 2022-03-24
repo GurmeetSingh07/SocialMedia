@@ -14,4 +14,5 @@ router.post("/login", authController.userlogin);
 router.put("/update", tokenVerify, userController.update);
 router.post("/forget", tokenVerify, userController.forget);
 router.put("/reset", tokenVerify, userController.reset);
+
 module.exports = router;

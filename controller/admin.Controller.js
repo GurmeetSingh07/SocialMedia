@@ -66,6 +66,10 @@ class Admincontoller {
 
         const result = await adminSave.save();
         return res.status(200).json({ message: "Admin save", success: true });
+      } else if (otp != oldOtp) {
+        return res
+          .status(400)
+          .json({ message: "you entered the wrong OTP", success: false });
       }
     } catch (e) {
       console.log(e);
