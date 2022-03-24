@@ -16,4 +16,7 @@ router.post("/forget", tokenVerify, userController.forget);
 router.put("/reset", tokenVerify, userController.reset);
 router.post("/friendRequest", userController.friendRequest);
 
+router.post("/requestApprove", userController.requestApprove);
+
+
 module.exports = router;

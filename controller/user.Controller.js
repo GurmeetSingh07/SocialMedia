@@ -1,4 +1,9 @@
 const Model = require("../models/user.Schema");
+
+const { userSchema } = require("../joiValidation/joi.user");
+const { request } = require("../joiValidation/user.Request");
+const { userUpdate } = require("../joiValidation/user.Update");
+const { userReset } = require("../joiValidation/user.Reset");
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
 
@@ -9,12 +14,12 @@ class Usercontoller {
     try {
       const { fName, lName, emailId, password } = req.body;
 
-      if (!fName || !lName || !emailId || !password) {
+      const results = userSchema.validate(req.body);
+      if (results.error) {
         return res
           .status(206)
-          .json({ message: "please fill the field", success: false });
+          .json({ message: results.error.message, success: false });
       }
-
       const userExist = await Model.findOne({ emailId: emailId });
 
       if (userExist) {
@@ -80,10 +85,11 @@ class Usercontoller {
   update = async (req, res) => {
     try {
       const { emailId, newPassword } = req.body;
-      if (!emailId || !newPassword) {
+      const results = userUpdate.validate(req.body);
+      if (results.error) {
         return res
-          .status(400)
-          .json({ message: "fill the field", success: true });
+          .status(206)
+          .json({ message: results.error.message, success: false });
       }
 
       const userFind = await Model.findOne({ emailId: emailId });
@@ -115,7 +121,6 @@ class Usercontoller {
   forget = async (req, res) => {
     try {
       const { emailId } = req.body;
-      console.log(req.body);
 
       if (!emailId) {
         return res
@@ -149,11 +154,11 @@ class Usercontoller {
 
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
-
-      if (!emailId || !otp || !newPassword) {
+      const results = userReset.validate(req.body);
+      if (results.error) {
         return res
-          .status(400)
-          .json({ message: "fill the field", success: false });
+          .status(206)
+          .json({ message: results.error.message, success: false });
       }
 
       const resetEmail = await Model.findOne({ emailId: emailId });
@@ -186,7 +191,13 @@ class Usercontoller {
 
   friendRequest = async (req, res) => {
     try {
-      const { requestReciver, requestSender, userName } = req.body;
+      const { requestReciver, requestSender } = req.body;
+      const results = request.validate(req.body);
+      if (results.error) {
+        return res
+          .status(206)
+          .json({ message: results.error.message, success: false });
+      }
 
       const userExist = await Model.findOne({
         _id: requestReciver,
@@ -206,25 +217,67 @@ class Usercontoller {
           });
         }
       }
-      if (true) {
-        const requestResult = await Model.findByIdAndUpdate(
-          { _id: requestReciver },
-          {
-            $push: {
-              friendRequest: requestReciver,
-            },
+
+      const requestResult = await Model.findByIdAndUpdate(
+        { _id: requestReciver },
+        {
+          $push: {
+            friendRequest: requestSender,
           },
-          {
-            set: true,
-          }
-        );
-        return res
-          .status(200)
-          .json({ message: "Request successfully send", success: true });
-      }
+        },
+        {
+          set: true,
+        }
+      );
+      return res
+        .status(200)
+        .json({ message: "Request successfully send", success: true });
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "server Error", success: false });
+    }
+  };
+
+  requestApprove = async (req, res) => {
+    try {
+      const { requestDetails, requestReciver } = req.body;
+      const results = request.validate(req.body);
+      if (results.error) {
+        return res
+          .status(206)
+          .json({ message: results.error.message, success: false });
+      }
+
+      const requestResult = await Model.findByIdAndUpdate(
+        { _id: requestReciver },
+        {
+          $pull: {
+            friendRequest: requestDetails,
+          },
+        },
+        {
+          set: true,
+        }
+      );
+
+      const friendListResult = await Model.findByIdAndUpdate(
+        { _id: requestReciver },
+        {
+          $push: {
+            friendList: requestDetails,
+          },
+        },
+        {
+          set: true,
+        }
+      );
+      console.log(friendListResult);
+      return res
+        .status(200)
+        .json({ message: "Request successfully accepted", success: true });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Sever Error", success: true });
     }
   };
 }
