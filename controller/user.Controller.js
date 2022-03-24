@@ -36,7 +36,7 @@ class Usercontoller {
 
         console.log(globalData);
 
-        await mailservice(globalData, emailId);
+        await mailservice.service(globalData, emailId);
         return res.json({ message: "email successfully sent", success: true });
       }
     } catch (e) {
@@ -71,6 +71,10 @@ class Usercontoller {
 
         const result = await userSave.save();
         return res.status(200).json({ message: "user save", success: true });
+      } else if (otp != oldOtp) {
+        return res
+          .status(400)
+          .json({ message: "you entered the wrong OTP", success: false });
       }
     } catch (e) {
       console.log(e);
@@ -130,10 +134,10 @@ class Usercontoller {
           .status(404)
           .json({ message: "invalid  emailId ", success: false });
       } else {
-        globalData["otp"] = Math.floor(Math.random() * 999999);
+        // globalData["otp"] = Math.floor(Math.random() * 999999);
         console.log(globalData);
 
-        await demo(globalData, emailId);
+        await mailservice.serv(globalData, emailId);
 
         return res
           .status(200)
