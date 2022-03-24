@@ -1,9 +1,7 @@
 const joi = require("joi");
 
-const userSchema = joi.object({
+const userRequest = joi.object({
   requestReciver: joi.string().required(),
   requestSender: joi.string().required(),
 });
-module.exports = {
-  userSchema,
-};
+module.exports = { userRequest };

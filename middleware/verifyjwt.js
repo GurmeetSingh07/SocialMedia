@@ -15,6 +15,8 @@ module.exports = async (req, res, next) => {
       return next();
     }
   } catch (e) {
-    return res.status(404).json({ message: "Not found", success: false });
+    return res
+      .status(404)
+      .json({ message: "account not found", success: false });
   }
 };

@@ -1,9 +1,10 @@
 const Model = require("../models/user.Schema");
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
-const { adminSchema } = require("../joiValidation/joi.user");
-const { adminUpdate } = require("../joiValidation/user.Update");
-const { adminReset } = require("../joiValidation/user.Reset");
+const { Schema } = require("../joiValidation/joi.user");
+const { Update } = require("../joiValidation/user.Update");
+const { reset } = require("../joiValidation/user.Reset");
+
 const globalData = {};
 
 class Admincontoller {
@@ -11,7 +12,7 @@ class Admincontoller {
     try {
       const { fName, lName, emailId, password } = req.body;
 
-      const results = adminSchema.validate(req.body);
+      const results = Schema.validate(req.body);
       if (results.error) {
         return res
           .status(206)
@@ -82,7 +83,7 @@ class Admincontoller {
   update = async (req, res) => {
     try {
       const { emailId, newPassword } = req.body;
-      const results = adminUpdate.validate(req.body);
+      const results = Update.validate(req.body);
       if (results.error) {
         return res
           .status(206)
@@ -153,7 +154,7 @@ class Admincontoller {
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
 
-      const results = adminReset.validate(req.body);
+      const results = reset.validate(req.body);
       if (results.error) {
         return res
           .status(206)

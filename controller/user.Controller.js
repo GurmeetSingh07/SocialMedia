@@ -1,9 +1,10 @@
 const Model = require("../models/user.Schema");
 
-const { userSchema } = require("../joiValidation/joi.user");
-const { request } = require("../joiValidation/user.Request");
-const { userUpdate } = require("../joiValidation/user.Update");
-const { userReset } = require("../joiValidation/user.Reset");
+const { Schema } = require("../joiValidation/joi.user");
+const { requestApproved } = require("../joiValidation/request.Approved");
+const { userRequest } = require("../joiValidation/user.Request");
+const { Update } = require("../joiValidation/user.Update");
+const { reset } = require("../joiValidation/user.Reset");
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
 
@@ -14,7 +15,7 @@ class Usercontoller {
     try {
       const { fName, lName, emailId, password } = req.body;
 
-      const results = userSchema.validate(req.body);
+      const results = Schema.validate(req.body);
       if (results.error) {
         return res
           .status(206)
@@ -36,8 +37,10 @@ class Usercontoller {
 
         console.log(globalData);
 
-        await mailservice.service(globalData, emailId);
-        return res.json({ message: "email successfully sent", success: true });
+        await mailservice(globalData, emailId);
+        return res
+          .status(200)
+          .json({ message: "email successfully sent", success: true });
       }
     } catch (e) {
       console.log(e);
@@ -70,7 +73,9 @@ class Usercontoller {
         });
 
         const result = await userSave.save();
-        return res.status(200).json({ message: "user save", success: true });
+        return res
+          .status(200)
+          .json({ message: "User Successfully Register", success: true });
       } else if (otp != oldOtp) {
         return res
           .status(400)
@@ -85,7 +90,7 @@ class Usercontoller {
   update = async (req, res) => {
     try {
       const { emailId, newPassword } = req.body;
-      const results = userUpdate.validate(req.body);
+      const results = Update.validate(req.body);
       if (results.error) {
         return res
           .status(206)
@@ -124,8 +129,8 @@ class Usercontoller {
 
       if (!emailId) {
         return res
-          .status(404)
-          .json({ message: "fill the field", success: false });
+          .status(206)
+          .json({ message: "Please fill the field", success: false });
       }
       const userForgot = await Model.findOne({ emailId: emailId });
 
@@ -134,10 +139,9 @@ class Usercontoller {
           .status(404)
           .json({ message: "invalid  emailId ", success: false });
       } else {
-        // globalData["otp"] = Math.floor(Math.random() * 999999);
-        console.log(globalData);
+        globalData["otp"] = Math.floor(Math.random() * 999999);
 
-        await mailservice.serv(globalData, emailId);
+        await mailservice(globalData, emailId);
 
         return res
           .status(200)
@@ -154,7 +158,7 @@ class Usercontoller {
 
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
-      const results = userReset.validate(req.body);
+      const results = reset.validate(req.body);
       if (results.error) {
         return res
           .status(206)
@@ -192,7 +196,7 @@ class Usercontoller {
   friendRequest = async (req, res) => {
     try {
       const { requestReciver, requestSender } = req.body;
-      const results = request.validate(req.body);
+      const results = userRequest.validate(req.body);
       if (results.error) {
         return res
           .status(206)
@@ -210,7 +214,7 @@ class Usercontoller {
       }
 
       for (const key in userExist.friendRequest) {
-        if (userExist.friendRequest[key] === requestReciver) {
+        if (userExist.friendRequest[key] === requestSender) {
           return res.status(400).json({
             message: "you have already send the request",
             success: true,
@@ -238,10 +242,10 @@ class Usercontoller {
     }
   };
 
-  requestApprove = async (req, res) => {
+  requestApproved = async (req, res) => {
     try {
       const { requestDetails, requestReciver } = req.body;
-      const results = request.validate(req.body);
+      const results = requestApproved.validate(req.body);
       if (results.error) {
         return res
           .status(206)
