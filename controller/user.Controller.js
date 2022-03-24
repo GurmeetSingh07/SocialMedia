@@ -1,7 +1,7 @@
 const Model = require("../models/user.Schema");
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
-const { model } = require("../database/connection");
+
 const globalData = {};
 
 class Usercontoller {
@@ -181,6 +181,50 @@ class Usercontoller {
     } catch (e) {
       console.log(e);
       return res.status(500).json({ message: e.message, success: false });
+    }
+  };
+
+  friendRequest = async (req, res) => {
+    try {
+      const { requestReciver, requestSender, userName } = req.body;
+
+      const userExist = await Model.findOne({
+        _id: requestReciver,
+      });
+
+      if (!userExist) {
+        return res
+          .status(404)
+          .json({ message: "User Not Found", success: false });
+      }
+
+      for (const key in userExist.friendRequest) {
+        if (userExist.friendRequest[key] === requestReciver) {
+          return res.status(400).json({
+            message: "you have already send the request",
+            success: true,
+          });
+        }
+      }
+      if (true) {
+        const requestResult = await Model.findByIdAndUpdate(
+          { _id: requestReciver },
+          {
+            $push: {
+              friendRequest: requestReciver,
+            },
+          },
+          {
+            set: true,
+          }
+        );
+        return res
+          .status(200)
+          .json({ message: "Request successfully send", success: true });
+      }
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "server Error", success: false });
     }
   };
 }

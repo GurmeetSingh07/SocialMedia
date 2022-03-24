@@ -14,5 +14,6 @@ router.post("/login", authController.userlogin);
 router.put("/update", tokenVerify, userController.update);
 router.post("/forget", tokenVerify, userController.forget);
 router.put("/reset", tokenVerify, userController.reset);
+router.post("/friendRequest", userController.friendRequest);
 
 module.exports = router;
