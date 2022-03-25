@@ -7,6 +7,7 @@ const { Update } = require("../joiValidation/user.Update");
 const { reset } = require("../joiValidation/user.Reset");
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
+const { findByIdAndUpdate } = require("../models/user.Schema");
 
 const globalData = {};
 
@@ -206,6 +207,7 @@ class Usercontoller {
       const userExist = await Model.findOne({
         _id: requestReciver,
       });
+      console.log(userExist);
 
       if (!userExist) {
         return res
@@ -213,11 +215,20 @@ class Usercontoller {
           .json({ message: "User Not Found", success: false });
       }
 
+      for (const key in userExist.friendList) {
+        if (userExist.friendList[key] === requestSender) {
+          return res.status(400).json({
+            message: " user is already  your friend",
+            success: false,
+          });
+        }
+      }
+
       for (const key in userExist.friendRequest) {
         if (userExist.friendRequest[key] === requestSender) {
           return res.status(400).json({
             message: "you have already send the request",
-            success: true,
+            success: false,
           });
         }
       }
@@ -233,6 +244,7 @@ class Usercontoller {
           set: true,
         }
       );
+
       return res
         .status(200)
         .json({ message: "Request successfully send", success: true });
@@ -250,6 +262,17 @@ class Usercontoller {
         return res
           .status(206)
           .json({ message: results.error.message, success: false });
+      }
+
+      const reciverFind = await Model.findOne({
+        _id: requestReciver,
+      });
+      for (const key in reciverFind.friendList) {
+        if (reciverFind.friendList[key] === requestDetails) {
+          return res
+            .status(400)
+            .json({ message: " already accepted request", success: false });
+        }
       }
 
       const requestResult = await Model.findByIdAndUpdate(
@@ -275,7 +298,23 @@ class Usercontoller {
           set: true,
         }
       );
+
       console.log(friendListResult);
+
+      const friendListResult1 = await Model.findByIdAndUpdate(
+        { _id: requestDetails },
+        {
+          $push: {
+            friendList: requestReciver,
+          },
+        },
+        {
+          set: true,
+        }
+      );
+
+      console.log(friendListResult1);
+
       return res
         .status(200)
         .json({ message: "Request successfully accepted", success: true });
