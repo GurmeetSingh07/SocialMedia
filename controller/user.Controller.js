@@ -8,6 +8,9 @@ const { reset } = require("../joiValidation/user.Reset");
 const mailservice = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
 const { findByIdAndUpdate } = require("../models/user.Schema");
+const { verify } = require("jsonwebtoken");
+const dataOtp = require("../testFunction/otpFunction");
+// const tester = require("../testFunction/otpFunction");
 
 const globalData = {};
 
@@ -39,9 +42,11 @@ class Usercontoller {
         console.log(globalData);
 
         await mailservice(globalData, emailId);
-        return res
-          .status(200)
-          .json({ message: "email successfully sent", success: true });
+        return res.status(200).json({
+          message: "email successfully sent",
+          success: true,
+          globalData: globalData.otp,
+        });
       }
     } catch (e) {
       console.log(e);
@@ -62,9 +67,9 @@ class Usercontoller {
           .json({ message: "please fill the otp", success: false });
       }
 
-      let oldOtp = JSON.stringify(globalData.otp);
+      let oldOtp = globalData.otp;
 
-      if (otp === oldOtp) {
+      if (otp == oldOtp) {
         const userSave = new Model({
           fName,
           lName,
@@ -144,9 +149,11 @@ class Usercontoller {
 
         await mailservice(globalData, emailId);
 
-        return res
-          .status(200)
-          .json({ message: "email send seccessfully", success: true });
+        return res.status(200).json({
+          message: "email send seccessfully",
+          globalData: globalData.otp,
+          success: true,
+        });
       }
     } catch (e) {
       console.log(e);
@@ -155,8 +162,8 @@ class Usercontoller {
   };
   reset = async (req, res) => {
     try {
-      let oldOtp = JSON.stringify(globalData.otp);
-
+      // let oldOtp = JSON.stringify(globalData.otp);
+      let oldOtp = globalData.otp;
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
       const results = reset.validate(req.body);
@@ -172,7 +179,7 @@ class Usercontoller {
         return res
           .status()
           .json({ message: "invalid  EmailID ", success: false });
-      } else if (emailId === resetEmail.emailId && otp === oldOtp) {
+      } else if (emailId === resetEmail.emailId && otp == oldOtp) {
         const id = resetEmail._id;
         const userUpdate = await Model.findByIdAndUpdate(
           { _id: id },
