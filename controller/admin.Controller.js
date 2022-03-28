@@ -35,7 +35,11 @@ class Admincontoller {
         console.log(globalData);
 
         await mailservice(globalData, emailId);
-        return res.json({ message: "email successfully sent", success: true });
+        return res.json({
+          message: "email successfully sent",
+          globalData: globalData.otp,
+          success: true,
+        });
       }
     } catch (e) {
       console.log(e);
@@ -56,9 +60,10 @@ class Admincontoller {
           .json({ message: "please fill the otp", success: false });
       }
 
-      let oldOtp = JSON.stringify(globalData.otp);
+      // let oldOtp = JSON.stringify(globalData.otp);
+      let oldOtp = globalData.otp;
 
-      if (otp === oldOtp) {
+      if (otp == oldOtp) {
         const adminSave = new Model({
           fName,
           lName,
@@ -138,9 +143,11 @@ class Admincontoller {
 
         await demo(globalData, emailId);
 
-        return res
-          .status(200)
-          .json({ message: "email send seccessfully", success: true });
+        return res.status(200).json({
+          message: "email send seccessfully",
+          globalData: globalData.otp,
+          success: true,
+        });
       }
     } catch (e) {
       console.log(e);
@@ -149,8 +156,9 @@ class Admincontoller {
   };
   reset = async (req, res) => {
     try {
-      let oldOtp = JSON.stringify(globalData.otp);
+      // let oldOtp = JSON.stringify(globalData.otp);
 
+      let oldOtp = globalData.otp;
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
 
@@ -166,7 +174,7 @@ class Admincontoller {
         return res
           .status()
           .json({ message: "invalid  EmailID ", success: false });
-      } else if (emailId === resetEmail.emailId && otp === oldOtp) {
+      } else if (emailId === resetEmail.emailId && otp == oldOtp) {
         const id = resetEmail._id;
         const userUpdate = await Model.findByIdAndUpdate(
           { _id: id },

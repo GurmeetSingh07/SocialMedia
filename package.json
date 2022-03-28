@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "nodemon ./bin/www",
+    "test": "jest --forceExit"
   },
   "dependencies": {
     "amqplib": "^0.8.0",
@@ -12,10 +13,12 @@
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
+    "jest": "^27.5.1",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.8",
     "morgan": "~1.9.1",
-    "nodemailer": "^6.7.3"
+    "nodemailer": "^6.7.3",
+    "supertest": "^6.2.2"
   }
 }
