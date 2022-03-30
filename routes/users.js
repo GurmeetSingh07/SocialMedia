@@ -18,4 +18,6 @@ router.post("/friendRequest", userController.friendRequest);
 
 router.post("/requestApprove", userController.requestApproved);
 
+router.post("/messanger", userController.messanger);
+
 module.exports = router;

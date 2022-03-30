@@ -1,5 +1,6 @@
 const Model = require("../models/user.Schema");
-
+const app = require("../app");
+const socketio = require("socket.io");
 const { Schema } = require("../joiValidation/joi.user");
 const { requestApproved } = require("../joiValidation/request.Approved");
 const { userRequest } = require("../joiValidation/user.Request");
@@ -328,6 +329,53 @@ class Usercontoller {
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "Sever Error", success: true });
+    }
+  };
+
+  messanger = async (req, res) => {
+    try {
+      console.log(req.body);
+      const { senderId, reciverId } = req.body;
+      if (!senderId || !reciverId) {
+        return res
+          .status(206)
+          .json({ message: "fill the field", success: true });
+      }
+
+      const senderExist = await Model.findOne({ _id: senderId });
+      if (!senderExist) {
+        return res
+          .status(404)
+          .json({ message: "senderId not found", success: true });
+      }
+
+      const reciverExist = await Model.findOne({ _id: reciverId });
+      if (!reciverExist) {
+        return res
+          .status(404)
+          .json({ message: "reciverId not found", success: true });
+      }
+
+      for (let key in reciverExist.friendList) {
+        if (reciverExist.friendList[key] != senderId) {
+          return res
+            .status(400)
+            .json({ message: "not a friend", success: true });
+        } else {
+          const io = socketio(app);
+
+          io.on("connection", (socket) => {
+            socket.on("clientmessage", (msg) => {
+              io.emit("allmessage", { text: msg.text });
+            });
+          });
+
+          return res.status(200).json({ message: "true", success: true });
+        }
+      }
+    } catch (e) {
+      console.log(e.message);
+      return res.status(500).json({ message: "SERVER ERROR", success: true });
     }
   };
 }

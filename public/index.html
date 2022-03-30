@@ -1,0 +1,46 @@
+<style></style>
+
+
+  <form action="http://localhost:3000/users/messanger" method="post" id="messagearea"></form>
+  <div id="inputs">
+    <input type="text" id="message" />
+    <input type="text" id="message" />
+    <div id="button">
+      <input type="submit" />
+    </div>
+    <div id="yourmessage"></div>
+  </div>
+</form>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+  let messagearea = document.querySelector("#messagearea");
+
+  do {
+    name = prompt("Please enter your name: ");
+  } while (!name);
+
+  messagearea.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      sendMessage(e.target.value);
+    }
+  });
+
+  const socket = io("http://localhost:3000");
+  socket.on("message", (data) => {
+    console.log(data);
+    socket.emit("client", { data: "this is from client" });
+  });
+
+  document.querySelector("#messagearea").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const message = document.querySelector("#message").value;
+
+    socket.emit("clientmessage", { text: message });
+
+    //document.querySelector('#yourmessage').innerHTML=message
+  });
+  socket.on("allmessage", (mess) => {
+    document.querySelector("#yourmessage").innerHTML += `<li>${mess.text}</li>`;
+  });
+</script>
