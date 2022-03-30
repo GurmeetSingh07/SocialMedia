@@ -12,8 +12,12 @@ const { findByIdAndUpdate } = require("../models/user.Schema");
 const { verify } = require("jsonwebtoken");
 const dataOtp = require("../testFunction/otpFunction");
 // const tester = require("../testFunction/otpFunction");
+const redis = require("redis");
+const client = redis.createClient({
+  legacyMode: true,
+});
 
-const globalData = {};
+client.connect();
 
 class Usercontoller {
   signUp = async (req, res) => {
@@ -33,20 +37,23 @@ class Usercontoller {
           .status(409)
           .json({ message: "User Already Exist", success: false });
       } else {
-        globalData["otp"] = Math.floor(Math.random() * 99999);
+        const globalData = {};
+
+        globalData[`${emailId}`] = Math.floor(Math.random() * 99999);
         globalData["fName"] = fName;
         globalData["lName"] = lName;
         globalData["emailId"] = emailId;
         globalData["password"] = password;
         globalData["role"] = `${"user"}`;
-
         console.log(globalData);
+
+        client.setEx("global", 60, JSON.stringify(globalData));
 
         await mailservice(globalData, emailId);
         return res.status(200).json({
           message: "email successfully sent",
           success: true,
-          globalData: globalData.otp,
+          globalData: globalData[`${emailId}`],
         });
       }
     } catch (e) {
@@ -59,35 +66,53 @@ class Usercontoller {
 
   signUpVerify = async (req, res) => {
     try {
-      const { fName, lName, emailId, password, role } = globalData;
-      const { otp } = req.body;
+      client.get("global", async (err, result) => {
+        if (err) {
+          throw err;
+        } else {
+          let redisData = JSON.parse(result);
 
-      if (!otp) {
-        return res
-          .status(400)
-          .json({ message: "please fill the otp", success: false });
-      }
+          if (redisData === null) {
+            return res.status(400).json({
+              message: "to late for otp verify sign back",
+              success: false,
+            });
+          }
 
-      let oldOtp = globalData.otp;
+          // console.log(redisData);
 
-      if (otp == oldOtp) {
-        const userSave = new Model({
-          fName,
-          lName,
-          emailId,
-          password,
-          role,
-        });
+          const { fName, lName, emailId, password, role } = redisData;
 
-        const result = await userSave.save();
-        return res
-          .status(200)
-          .json({ message: "User Successfully Register", success: true });
-      } else if (otp != oldOtp) {
-        return res
-          .status(400)
-          .json({ message: "you entered the wrong OTP", success: false });
-      }
+          const { otp } = req.body;
+          // console.log(otp);
+          if (!otp) {
+            return res
+              .status(400)
+              .json({ message: "please fill the otp", success: false });
+          }
+
+          let oldOtp = redisData[`${emailId}`];
+
+          if (otp === oldOtp) {
+            const userSave = new Model({
+              fName,
+              lName,
+              emailId,
+              password,
+              role,
+            });
+
+            const result = await userSave.save();
+            return res
+              .status(200)
+              .json({ message: "User Successfully Register", success: true });
+          } else if (otp != oldOtp) {
+            return res
+              .status(400)
+              .json({ message: "you entered the wrong OTP", success: false });
+          }
+        }
+      });
     } catch (e) {
       console.log(e);
       return res.status(500).json({ message: e.message, success: false });
@@ -146,13 +171,13 @@ class Usercontoller {
           .status(404)
           .json({ message: "invalid  emailId ", success: false });
       } else {
-        globalData["otp"] = Math.floor(Math.random() * 999999);
+        globalData[`${emailId}`] = Math.floor(Math.random() * 999999);
 
         await mailservice(globalData, emailId);
 
         return res.status(200).json({
           message: "email send seccessfully",
-          globalData: globalData.otp,
+          globalData: globalData[`${emailId}`],
           success: true,
         });
       }

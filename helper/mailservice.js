@@ -2,9 +2,9 @@ let nodemailer = require("nodemailer");
 const amqp = require("amqplib/callback_api");
 module.exports = async (globalstorage, emailId) => {
   try {
-    let otp = globalstorage["otp"];
-    console.log(emailId);
-    console.log(otp);
+    let otp = globalstorage[`${emailId}`];
+    // console.log(emailId);
+    // console.log(otp);
 
     amqp.connect("amqp://localhost", (connError, connection) => {
       if (connError) {
@@ -26,7 +26,7 @@ module.exports = async (globalstorage, emailId) => {
         channel.assertQueue(QUEUE);
 
         channel.sendToQueue(QUEUE, Buffer.from(newData));
-        console.log(`Message send ${QUEUE} `);
+        // console.log(`Message send ${QUEUE} `);
       });
 
       // Receive
@@ -41,9 +41,9 @@ module.exports = async (globalstorage, emailId) => {
         channel.consume(
           QUEUE,
           (msg) => {
-            console.log(
-              `Message received From ${QUEUE} QUEUE: ${msg.content.toString()}`
-            );
+            // console.log(
+            //   `Message received From ${QUEUE} QUEUE: ${msg.content.toString()}`
+            // );
 
             let result = msg.content.toString();
             let mailData = JSON.parse(result);
