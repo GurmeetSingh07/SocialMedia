@@ -1,17 +1,27 @@
 let nodemailer = require("nodemailer");
 const amqp = require("amqplib/callback_api");
-module.exports = async (globalstorage, emailId) => {
-  try {
-    let otp = globalstorage[`${emailId}`];
-    // console.log(emailId);
-    // console.log(otp);
+var connectionObject = require("../helper/rabbitMqConnection");
+class Rabbitmqnodemailer {
+  constructor() {
+    this.createConnection();
+  }
+  createConnection = async (req, res) => {
+    this.connection = await connectionObject.connection();
+  };
 
-    amqp.connect("amqp://localhost", (connError, connection) => {
-      if (connError) {
-        throw connError;
-      }
+  rabbit = async (globalstorage, emailId) => {
+    try {
+      let otp = globalstorage[`${emailId}`];
 
-      connection.createChannel((channelError, channel) => {
+      console.log(emailId);
+      console.log(otp);
+
+      // amqp.connect("amqp://localhost", (connError, connection) => {
+      //   if (connError) {
+      //     throw connError;
+      //   }
+
+      this.connection.createChannel((channelError, channel) => {
         if (channelError) {
           throw channelError;
         }
@@ -20,6 +30,7 @@ module.exports = async (globalstorage, emailId) => {
           emailId: `${emailId}`,
           otp: `${otp}`,
         };
+        // console.log(data);
 
         let newData = JSON.stringify(data);
         const QUEUE = "email";
@@ -28,9 +39,11 @@ module.exports = async (globalstorage, emailId) => {
         channel.sendToQueue(QUEUE, Buffer.from(newData));
         // console.log(`Message send ${QUEUE} `);
       });
+      // });
 
+       
       // Receive
-      connection.createChannel((channelError, channel) => {
+      this.connection.createChannel((channelError, channel) => {
         if (channelError) {
           throw channelError;
         }
@@ -66,6 +79,7 @@ module.exports = async (globalstorage, emailId) => {
               subject: `Forget Password`,
               text: `Your OTP code is ${mailData.otp} `,
             };
+            console.log("newotp" + mailData.otp);
 
             const sendEmail = transporter.sendMail(mailOptions);
           },
@@ -74,9 +88,11 @@ module.exports = async (globalstorage, emailId) => {
           }
         );
       });
-    });
-  } catch (e) {
-    console.log(e);
-    throw e;
-  }
-};
+      // });
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  };
+}
+module.exports = new Rabbitmqnodemailer();

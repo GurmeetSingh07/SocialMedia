@@ -6,7 +6,8 @@ const { requestApproved } = require("../joiValidation/request.Approved");
 const { userRequest } = require("../joiValidation/user.Request");
 const { Update } = require("../joiValidation/user.Update");
 const { reset } = require("../joiValidation/user.Reset");
-const mailservice = require("../helper/mailservice");
+// const mailservice = require("../helper/mailservice");
+const rabbitMqnodemailer = require("../helper/mailservice");
 const demo = require("../helper/mailservice");
 const { findByIdAndUpdate } = require("../models/user.Schema");
 const { verify } = require("jsonwebtoken");
@@ -18,6 +19,7 @@ const client = redis.createClient({
 });
 
 client.connect();
+var dataForget = {};
 
 class Usercontoller {
   signUp = async (req, res) => {
@@ -45,11 +47,12 @@ class Usercontoller {
         globalData["emailId"] = emailId;
         globalData["password"] = password;
         globalData["role"] = `${"user"}`;
-        console.log(globalData);
+        // console.log(globalData);
 
         client.setEx("global", 60, JSON.stringify(globalData));
 
-        await mailservice(globalData, emailId);
+        await rabbitMqnodemailer.rabbit(globalData, emailId);
+
         return res.status(200).json({
           message: "email successfully sent",
           success: true,
@@ -70,6 +73,7 @@ class Usercontoller {
         if (err) {
           throw err;
         } else {
+          // console.log(result);
           let redisData = JSON.parse(result);
 
           if (redisData === null) {
@@ -79,12 +83,12 @@ class Usercontoller {
             });
           }
 
-          // console.log(redisData);
+          console.log(redisData);
 
           const { fName, lName, emailId, password, role } = redisData;
 
           const { otp } = req.body;
-          // console.log(otp);
+          console.log(otp);
           if (!otp) {
             return res
               .status(400)
@@ -93,7 +97,7 @@ class Usercontoller {
 
           let oldOtp = redisData[`${emailId}`];
 
-          if (otp === oldOtp) {
+          if (otp == oldOtp) {
             const userSave = new Model({
               fName,
               lName,
@@ -171,13 +175,13 @@ class Usercontoller {
           .status(404)
           .json({ message: "invalid  emailId ", success: false });
       } else {
-        globalData[`${emailId}`] = Math.floor(Math.random() * 999999);
+        dataForget[`${emailId}`] = Math.floor(Math.random() * 999999);
 
-        await mailservice(globalData, emailId);
+        await rabbitMqnodemailer.rabbit(dataForget, emailId);
 
         return res.status(200).json({
           message: "email send seccessfully",
-          globalData: globalData[`${emailId}`],
+          globalData: dataForget[`${emailId}`],
           success: true,
         });
       }
@@ -189,9 +193,10 @@ class Usercontoller {
   reset = async (req, res) => {
     try {
       // let oldOtp = JSON.stringify(globalData.otp);
-      let oldOtp = globalData.otp;
+
       const { emailId, otp, newPassword } = req.body;
       console.log(req.body);
+      let oldOtp = dataForget[`${emailId}`];
       const results = reset.validate(req.body);
       if (results.error) {
         return res

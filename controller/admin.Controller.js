@@ -5,7 +5,15 @@ const { Schema } = require("../joiValidation/joi.user");
 const { Update } = require("../joiValidation/user.Update");
 const { reset } = require("../joiValidation/user.Reset");
 
-const globalData = {};
+const redis = require("redis");
+const client = redis.createClient({
+  legacyMode: true,
+});
+
+client.connect();
+var dataForget = {};
+
+// const globalData = {};
 
 class Admincontoller {
   signUp = async (req, res) => {
@@ -25,19 +33,22 @@ class Admincontoller {
           .status(409)
           .json({ message: "Admin Already Exist", success: false });
       } else {
-        globalData["otp"] = Math.floor(Math.random() * 99999);
+        const globalData = {};
+
+        globalData[`${emailId}`] = Math.floor(Math.random() * 99999);
         globalData["fName"] = fName;
         globalData["lName"] = lName;
         globalData["emailId"] = emailId;
         globalData["password"] = password;
-        globalData["role"] = `${"admin"}`;
+        globalData["role"] = `${"user"}`;
+        // console.log(globalData);
 
-        console.log(globalData);
+        client.setEx("global", 60, JSON.stringify(globalData));
 
-        await mailservice(globalData, emailId);
+        await rabbitMqnodemailer.rabbit(globalData, emailId);
         return res.json({
           message: "email successfully sent",
-          globalData: globalData.otp,
+          globalData: globalData[`${emailId}`],
           success: true,
         });
       }
@@ -51,34 +62,52 @@ class Admincontoller {
 
   signUpVerify = async (req, res) => {
     try {
-      const { fName, lName, emailId, password, role } = globalData;
-      const { otp } = req.body;
+      client.get("global", async (err, result) => {
+        if (err) {
+          throw err;
+        } else {
+          // console.log(result);
+          let redisData = JSON.parse(result);
 
-      if (!otp) {
-        return res
-          .status(400)
-          .json({ message: "please fill the otp", success: false });
-      }
+          if (redisData === null) {
+            return res.status(400).json({
+              message: "to late for otp verify sign back",
+              success: false,
+            });
+          }
 
-      // let oldOtp = JSON.stringify(globalData.otp);
-      let oldOtp = globalData.otp;
+          const { fName, lName, emailId, password, role } = redisData;
+          const { otp } = req.body;
 
-      if (otp == oldOtp) {
-        const adminSave = new Model({
-          fName,
-          lName,
-          emailId,
-          password,
-          role,
-        });
+          if (!otp) {
+            return res
+              .status(400)
+              .json({ message: "please fill the otp", success: false });
+          }
 
-        const result = await adminSave.save();
-        return res.status(200).json({ message: "Admin save", success: true });
-      } else if (otp != oldOtp) {
-        return res
-          .status(400)
-          .json({ message: "you entered the wrong OTP", success: false });
-      }
+          // let oldOtp = JSON.stringify(globalData.otp);
+          let oldOtp = redisData[`${emailId}`];
+
+          if (otp == oldOtp) {
+            const adminSave = new Model({
+              fName,
+              lName,
+              emailId,
+              password,
+              role,
+            });
+
+            const result = await adminSave.save();
+            return res
+              .status(200)
+              .json({ message: "Admin save", success: true });
+          } else if (otp != oldOtp) {
+            return res
+              .status(400)
+              .json({ message: "you entered the wrong OTP", success: false });
+          }
+        }
+      });
     } catch (e) {
       console.log(e);
       return res.status(500).json({ message: e.message, success: false });
@@ -138,14 +167,14 @@ class Admincontoller {
           .status(404)
           .json({ message: "invalid  emailId ", success: false });
       } else {
-        globalData["otp"] = Math.floor(Math.random() * 999999);
-        console.log(globalData);
+        dataForget["otp"] = Math.floor(Math.random() * 999999);
+        // console.log(globalData);
 
-        await demo(globalData, emailId);
+        await rabbitMqnodemailer.rabbit(dataForget, emailId);
 
         return res.status(200).json({
           message: "email send seccessfully",
-          globalData: globalData.otp,
+          globalData: dataForget[`${emailId}`],
           success: true,
         });
       }
@@ -158,8 +187,8 @@ class Admincontoller {
     try {
       // let oldOtp = JSON.stringify(globalData.otp);
 
-      let oldOtp = globalData.otp;
       const { emailId, otp, newPassword } = req.body;
+      let oldOtp = dataForget[`${emailId}`];
       console.log(req.body);
 
       const results = reset.validate(req.body);
